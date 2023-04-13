@@ -1,6 +1,6 @@
 import "../styles.css";
 import styled from "styled-components";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Note from "./Note.js";
 
 const STAFF = [
@@ -15,14 +15,22 @@ const STAFF = [
   { name: "E", showing: 0 },
   { name: "D", showing: 0 }
 ];
-
-const RESULTS = ["background-color: green;", "background-color: red;"];
-export default function Game({ children }) {
+const STYLES = {
+  1: {
+    "--resultColor": "green"
+  },
+  0: {
+    "--resultColor": "red"
+  }
+};
+export default function Game( ) {
   // console.log([STAFF.showing]);
   const [noteToShow, setNoteToShow] = useState(0);
   const [score, setScore] = useState(0);
   const [playing, setPlaying] = useState(0);
-  const [result, setResult] = useState(1);
+  const [result, setResult] = useState(-1);
+  const [trys, setTrys]=useState(-1);
+  const [percent, setPercent]=useState(0);
 
   const randomNote = () => {
     // looping through staff, setting each value to 0
@@ -39,26 +47,58 @@ export default function Game({ children }) {
     // using the setState to
     setNoteToShow(STAFF[noteIndex]);
   };
+  const calculateScore= ()=>{
+    let toReturn= Math.round((score / trys) * 100,3 );
+    if(isNaN(toReturn)){
+      toReturn=0
+    }
+    setPercent(toReturn)
+  }
+  useEffect(() => {
+    console.log("score: " + score);
+    console.log("trys: " + trys);
+
+    calculateScore()
+  }, [score, trys ]);
+  
   const checkAns = () => {
     let correct;
     let ans = document.querySelector("#choice").value;
     for (let i = 0; i < STAFF.length; i++) {
       if (STAFF[i].showing === 1) {
-        console.log("HIT");
+        // console.log("HIT");
         correct = STAFF[i].name;
       }
     }
-    if (ans === correct) {
+    if(trys===-1){
+      randomNote()
+      setTrys(trys+1)
+
+    } else if (ans === correct) {
+        console.log("correct");
+      setResult(1)
+      setScore(1+score)
+      setTrys(1+trys)
       setResult(1);
-      setScore(score + 1);
+
+      // calculateScore();
+
+      randomNote()
     } else {
+      
+      setTrys(trys+1)
+      // calculateScore();
+
       setResult(0);
     }
-    randomNote();
+    
+    
 
     // let ans= oc.
   };
-
+  const showResult =()=>{
+    let toReturn=""
+  }
   function renderNotes() {
     return <Note />;
   }
@@ -66,7 +106,7 @@ export default function Game({ children }) {
   return (
     <Wrapper>
       <h1>Guess the Note!</h1>
-      <div className="score">Score: {score}</div>
+      <div className="score">Percent Correct:{percent}%</div>
       <Staff className="Staff">
         {STAFF.map((note, index) => {
           return (
@@ -79,7 +119,8 @@ export default function Game({ children }) {
         {/* {newNote(noteToShow)} */}
       </Staff>
       <label>Choose a note:</label>
-      <select disabled={!playing} name="note" id="choice">
+      <select style={STYLES[result]} disabled={!playing} name="note" id="choice">
+        {console.log(STYLES[result])}
         <option value="A">A</option>
         <option value="B">B</option>
         <option value="C">C</option>
@@ -105,7 +146,6 @@ const Wrapper = styled.div`
   padding: 20px;
   gap: 6px;
   button.new {
-    background-color: {result};
     width: 20%;
     border-radius: 10px;
   }
@@ -113,13 +153,15 @@ const Wrapper = styled.div`
     margin: auto;
   }
   .score {
-    width: 70px;
+    /* width: 70px; */
     padding: 5px;
     border-radius: 10px;
-    
+    font-size:3ch;
     // font-weight: 24rem;
   }
-}
+  select{
+    background-color:var(--resultColor);
+  }
 `;
 const Staff = styled.div`
   --staffLineColor: rgba(0, 0, 0, 0.6);
